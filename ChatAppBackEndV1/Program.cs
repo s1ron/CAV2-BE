@@ -8,6 +8,7 @@ using ChatAppBackEndV2.Hubs;
 using ChatAppBackEndV2.Services.ConversationService;
 using ChatAppBackEndV2.Services.FileStorageService;
 using ChatAppBackEndV2.Services.MessageService;
+using ChatAppBackEndV2.Services.SystemImageService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
@@ -63,6 +64,7 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<ISystemImageService, SystemImageService>();
 
 builder.Services.AddSingleton<IDictionary<Guid, string>>(opts => new Dictionary<Guid, string>());
 builder.Services.AddScoped<ChatHub, ChatHub>();

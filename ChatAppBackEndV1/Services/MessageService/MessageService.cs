@@ -37,7 +37,7 @@ namespace ChatAppBackEndV2.Services.MessageService
                 var reacttionlist = reaction.Select(q => new ReactionOfAMessage()
                 {
                     UserId = q.u.Id,
-                    FirstName = q.u.FisrtName,
+                    FirstName = q.u.FirstName,
                     LastName = q.u.LastName,
                     UserName = q.u.UserName,
                     ProfileImagePath = q.u.ProfileImagePath,
@@ -84,7 +84,7 @@ namespace ChatAppBackEndV2.Services.MessageService
                                     Object = x.Select(z => new ReactionOfAMessage()
                                     {
                                         UserId = z.u.Id,
-                                        FirstName = z.u.FisrtName,
+                                        FirstName = z.u.FirstName,
                                         LastName = z.u.LastName,
                                         UserName = z.u.UserName,
                                         ProfileImagePath = z.u.ProfileImagePath,
@@ -115,7 +115,7 @@ namespace ChatAppBackEndV2.Services.MessageService
                                  NickName = x.p.NickName,
                                  UserId = x.u.Id,
                                  UserName = x.u.UserName,
-                                 FirstName = x.u.FisrtName,
+                                 FirstName = x.u.FirstName,
                                  LastName = x.u.LastName,
                                  Email = x.u.Email,
                                  ProfileDescription = x.u.ProfileDescription,
@@ -124,6 +124,7 @@ namespace ChatAppBackEndV2.Services.MessageService
             return new FirstMessageResponse()
             {
                 IsGroup = conversation.IsGroup,
+                CreateAt = conversation.CreateAt,
                 ConversationId = conversationId,
                 ConversationName = conversation.ConversationName,
                 AuthorId = conversation.AuthorId,
@@ -135,7 +136,7 @@ namespace ChatAppBackEndV2.Services.MessageService
                 QuickMessage = conversation.QuickMessage,
 
                 ConversationTheme = conversationTheme,
-                Participants = par,
+                ParticipantUser = par,
                 Messages = message
             };
 

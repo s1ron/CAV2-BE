@@ -5,7 +5,7 @@ namespace ChatAppBackEndV1.Data.Entities
 {
     public class AppUser : IdentityUser<Guid>
     {
-        public string FisrtName { get; set; }
+        public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime Dob { get; set; }
         public GenderEnum Gender { get; set; } = GenderEnum.Other;

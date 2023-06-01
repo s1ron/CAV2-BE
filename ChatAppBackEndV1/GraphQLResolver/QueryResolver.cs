@@ -1,4 +1,6 @@
 ﻿using ChatAppBackEndV1.Common.ServiceResponseResult;
+using ChatAppBackEndV1.Data.Entities;
+using ChatAppBackEndV1.Dtos.FriendService;
 using ChatAppBackEndV1.Services.FriendService;
 using ChatAppBackEndV1.Services.UserService;
 using ChatAppBackEndV2.Dtos.ConversationService;
@@ -8,6 +10,8 @@ using ChatAppBackEndV2.Dtos.UserService;
 using ChatAppBackEndV2.Hubs;
 using ChatAppBackEndV2.Services.ConversationService;
 using ChatAppBackEndV2.Services.MessageService;
+using ChatAppBackEndV2.Services.SystemImageService;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatAppBackEndV2.GraphQLResolver
 {
@@ -22,6 +26,14 @@ namespace ChatAppBackEndV2.GraphQLResolver
             return a;
         }
 
+        [GraphQLName("GetCollapseConversationByConversationId")]
+        [GraphQLDescription("GetCollapseConversationByConversationId")]
+        public async Task<CollapseConversationResponse> GetCollapseConversationByConversationIdAsync(Guid userId, long conversationId, [Service] IConversationService conversationService)
+        {
+            var a = await conversationService.GetCollapseConversationByConversationIdAsync(userId, conversationId);
+            return a;
+        }
+
         [GraphQLName("GetFirstMessages")]
         [GraphQLDescription("GetFirstMessages")]
         public async Task<FirstMessageResponse> GetFirstMessageAsync(long conversationId, [Service]IMessageService messageService)
@@ -33,12 +45,32 @@ namespace ChatAppBackEndV2.GraphQLResolver
         [GraphQLDescription("GetUserById")]
         public async Task<GetUserResponse> GetUserByIdAsync(Guid userId, [Service] IUserService userService)
         {
-            var result = await userService.GetUserAsync(userId);
-            if (result.IsSuccess)
+            var a = await userService.GetUserAsync(userId);
+            if (a.IsSuccess)
             {
-                return result.Result;
+                return a.Result;
             }
-            throw new GraphQLException(new Error(result.Message, "USER_NOT_FOUND"));
+            throw new GraphQLException(new Error(a.Message, "USER_NOT_FOUND"));
+        }
+
+        [GraphQLName("GetUserAndFriendStatus")]
+        [GraphQLDescription("GetUserAndFriendStatus")]
+        public async Task<GetUserByIdResponse> GetUserAndFriendStatusByIdAsync(Guid userId, Guid friendId, [Service] IFriendService friendService)
+        {
+            var a = await friendService.GetUserById(userId, friendId);
+            if (a.IsSuccess)
+            {
+                return a.Result;
+            }
+            throw new GraphQLException(new Error(a.Message, "USER_NOT_FOUND"));
+        }
+
+        [GraphQLName("CheckFriendStatus")]
+        [GraphQLDescription("CheckFriendStatus")]
+        public async Task<FriendStatusResponse> CheckFriendStatusAsync(Guid userId, Guid friendId, [Service] IFriendService friendService)
+        {
+            return await friendService.CheckFriendStatusAsync(userId, friendId);
+
         }
 
         [GraphQLName("GetOnlineFriends")]
@@ -64,6 +96,43 @@ namespace ChatAppBackEndV2.GraphQLResolver
                 return a.Result;
             }
             return null;
+        }
+        [GraphQLName("FindUsersByKeyword")]
+        [GraphQLDescription("FindUsersByKeyword")]
+        public async Task<List<AppUser>> FindUserByKeyword (string keyWord , [Service] IFriendService friendService)
+        {
+            var a = await friendService.FindUsersByKeyword(keyWord);
+            if (a.IsSuccess)
+            {
+                return a.Result;
+            }
+            return null;
+        }
+
+        [GraphQLName("GetFriendRequest")]
+        [GraphQLDescription("GetFriendRequest")]
+        public async Task<List<FriendRequestResponse>> GetFriendRequestAsync(Guid userId, [Service] IFriendService friendService)
+        {
+            var a = await friendService.GetFriendRequestAsync(userId);
+            if (a.IsSuccess)
+            {
+                return a.Result;
+            }
+            return null;
+        }
+
+        [GraphQLName("GetSystemImages")]
+        [GraphQLDescription("GetSystemImages")]
+        public Task<List<SystemImageMessage>> GetSystemImagesAsync(string type, [Service] ISystemImageService systemImageService)
+        {
+            return systemImageService.GetSystemImagesAsync(type);
+        }
+
+        [GraphQLName("GetListConversationTheme")]
+        [GraphQLDescription("GetListConversationTheme")]
+        public async Task<List<ConversationTheme>> GetListConversationTheme([Service] IConversationService conversationService)
+        {
+            return await conversationService.GetListConversationTheme();
         }
     }
 }

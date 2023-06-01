@@ -43,7 +43,7 @@ namespace ChatAppBackEndV2.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FisrtName")
+                    b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -99,17 +99,17 @@ namespace ChatAppBackEndV2.Migrations
                         {
                             Id = new Guid("69bd714f-9576-45ba-b5b7-f00649be00de"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ca6ae2ad-5bfb-4277-821e-e6cd43e9a2cc",
+                            ConcurrencyStamp = "34e70a81-df7e-43e2-8413-49f4354e98e1",
                             Dob = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "anhvu.siron@gmail.com",
                             EmailConfirmed = true,
-                            FisrtName = "Vo Anh",
+                            FirstName = "Vo Anh",
                             Gender = 1,
                             LastName = "Vu",
                             LockoutEnabled = false,
                             NormalizedEmail = "ANHVU.SIRON@GMAIL.COM",
                             NormalizedUserName = "ANHVU03",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIEs3hxndj+yy2JaZbl+xo2AvaviUic+I2H3oQB5eP9ATy8fgpZK1jpbzV7xK+1Ihw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDZ2+5yoN1pnO8H1B4DWFqaUK74R12Mm2usn1oCH1yXFCzm39FyzDLygIZ67UYTbSA==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "",
                             TwoFactorEnabled = false,
@@ -129,8 +129,8 @@ namespace ChatAppBackEndV2.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<float>("FileSize")
-                        .HasColumnType("real");
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("MessageId")
                         .HasColumnType("bigint");

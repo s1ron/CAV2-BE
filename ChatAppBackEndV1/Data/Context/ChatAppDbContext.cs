@@ -46,7 +46,7 @@ namespace ChatAppBackEndV1.Data.Context
                 EmailConfirmed = true,
                 PasswordHash = hasher.HashPassword(null, "12345678"),
                 SecurityStamp = string.Empty,
-                FisrtName = "Vo Anh",
+                FirstName = "Vo Anh",
                 LastName = "Vu",
                 Gender = GenderEnum.Male
             });

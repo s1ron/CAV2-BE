@@ -5,6 +5,7 @@ namespace ChatAppBackEndV2.Dtos.MessageService
     public class FirstMessageResponse
     {
         public bool IsGroup { get; set; }
+        public DateTime CreateAt { get; set; }
         public long ConversationId { get; set; }
         public string? ConversationName { get; set; }
         public Guid? AuthorId { get; set; }
@@ -16,7 +17,7 @@ namespace ChatAppBackEndV2.Dtos.MessageService
         public string? QuickMessage { get; set; }
 
         public ConversationTheme? ConversationTheme { get; set; }
-        public List<ParticipantUserResponse> Participants { get; set; }
+        public List<ParticipantUserResponse> ParticipantUser { get; set; }
         public List<SingleMessageResponse>? Messages { get; set; }
     }
 }

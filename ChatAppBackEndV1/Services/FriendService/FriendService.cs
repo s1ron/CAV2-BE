@@ -4,6 +4,7 @@ using ChatAppBackEndV1.Data.Entities;
 using ChatAppBackEndV1.Dtos.FriendService;
 using ChatAppBackEndV2.Dtos.FriendService;
 using ChatAppBackEndV2.Hubs;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatAppBackEndV1.Services.FriendService
@@ -20,12 +21,12 @@ namespace ChatAppBackEndV1.Services.FriendService
             _chatHub= chatHub;
         }
 
-        public async Task<ResponseResult<bool>> AcceptFriendRequestAsync(long friendRequestId, bool isAccept)
+        public async Task<ResponseResult<bool>> AcceptFriendRequestAsync(AcceptFriendRequestRequest acceptFriend)
         {
-            var friendRequest = await _context.FriendRequests.FindAsync(friendRequestId);
+            var friendRequest = await _context.FriendRequests.FindAsync(acceptFriend.FriendRequestId);
             if(friendRequest != null)
             {
-                if (isAccept)
+                if (acceptFriend.IsAccept)
                 {
                     var now = DateTime.Now;
                     List<Friend> friends = new()
@@ -42,10 +43,10 @@ namespace ChatAppBackEndV1.Services.FriendService
                             AddAt = now,
                         }
                     };
-                    await _context.Friends.AddRangeAsync(friends);
+                    //await _context.Friends.AddRangeAsync(friends);
                 }
-                _context.FriendRequests.Remove(friendRequest);
-                await _context.SaveChangesAsync();
+                //_context.FriendRequests.Remove(friendRequest);
+                //await _context.SaveChangesAsync();
                 return new SuccessResponseResult<bool>();
             }
             return new ErrorResponseResult<bool>();
@@ -87,7 +88,7 @@ namespace ChatAppBackEndV1.Services.FriendService
             {
                 FriendId = x.fr.FriendId,
                 AddAt = x.fr.AddAt,
-                FirstName = x.user.FisrtName,
+                FirstName = x.user.FirstName,
                 LastName = x.user.LastName,
                 Dob= x.user.Dob,
                 ProfileDescription= x.user.ProfileDescription,
@@ -112,7 +113,7 @@ namespace ChatAppBackEndV1.Services.FriendService
                 FriendRequestId = x.fr.Id,
                 SendAt = x.fr.SendAt,
                 SenderId = x.fr.SenderId,
-                FirstName = x.user.FisrtName,
+                FirstName = x.user.FirstName,
                 LastName= x.user.LastName,
                 Dob = x.user.Dob,
                 Gender = x.user.Gender,
@@ -124,34 +125,34 @@ namespace ChatAppBackEndV1.Services.FriendService
 
         public async Task<ResponseResult<bool>> RemoveFriendAsync(Guid userId, Guid friendId)
         {
-            var user = _context.Friends.Where(x=>(x.UserId == userId && x.FriendId == friendId) 
-                || (x.UserId == friendId && x.FriendId == userId));
+            var user = await _context.Friends.Where(x=>(x.UserId == userId && x.FriendId == friendId) 
+                || (x.UserId == friendId && x.FriendId == userId)).ToListAsync();
             
-            if (user.Count() == 2)
+            if (user.Count == 2)
             {
-                _context.RemoveRange(user);
-                await _context.SaveChangesAsync();
+                //_context.RemoveRange(user);
+                //await _context.SaveChangesAsync();
                 return new SuccessResponseResult<bool>();
             }
             return new ErrorResponseResult<bool>();
         }
 
-        public async Task<ResponseResult<bool>> SendFriendRequestAsync(Guid senderId, Guid receiverId)
+        public async Task<ResponseResult<long>> SendFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            var check = _context.FriendRequests.Where(x => x.SenderId == senderId && x.ReceiverId == receiverId);
-            if (check == null)
+            var check = await _context.FriendRequests.Where(x => x.SenderId == senderId && x.ReceiverId == receiverId).ToListAsync();
+            if (check.Count == 0)
             {
                 var friendRequest = new FriendRequest()
                 {
                     SenderId = senderId,
-                    ReceiverId = receiverId,    
+                    ReceiverId = receiverId,
                     SendAt = DateTime.Now
                 };
-                var result = await _context.FriendRequests.AddAsync(friendRequest);
-                await _context.SaveChangesAsync();
-                return new SuccessResponseResult<bool>();
+                //var result = await _context.FriendRequests.AddAsync(friendRequest);
+                //await _context.SaveChangesAsync();
+                return new SuccessResponseResult<long>(friendRequest.Id);
             }
-            return new ErrorResponseResult<bool>();
+            return new ErrorResponseResult<long>();
         }
 
         public async Task<List<FriendResponse>> GetOnlineFriendsAsync(Guid userId)
@@ -164,7 +165,40 @@ namespace ChatAppBackEndV1.Services.FriendService
             }
             return null;
 
-            //throw new NotImplementedException();
+        }
+
+        public async Task<ResponseResult<List<AppUser>>> FindUsersByKeyword(string keyWord)
+        {
+            var a = await _context.Users.Where(x => String.Concat(x.FirstName, " " , x.LastName).Contains(keyWord)).ToListAsync();
+            if (a == null)
+            {
+                return new ErrorResponseResult<List<AppUser>>();
+            }
+            return new SuccessResponseResult<List<AppUser>>(a);
+        }
+
+        public async Task<ResponseResult<GetUserByIdResponse>> GetUserById(Guid userId, Guid friendId)
+        {
+            var findedUser = await _context.Users.FindAsync(friendId);
+            if (findedUser == null)
+            {
+                return new ErrorResponseResult<GetUserByIdResponse>();
+            }
+            var status = await CheckFriendStatusAsync(userId, friendId);
+            var user = new GetUserByIdResponse()
+            {
+                FirstName= findedUser.FirstName,
+                LastName= findedUser.LastName,
+                Dob = findedUser.Dob,
+                Email = findedUser.Email,
+                PhoneNumber = findedUser.PhoneNumber,
+                UserId= userId,
+                Gender= findedUser.Gender,
+                ProfileDescription= findedUser.ProfileDescription,
+                ProfileImagePath= findedUser.ProfileImagePath,
+                FriendStatus= status,
+            };
+            return new SuccessResponseResult<GetUserByIdResponse>(user);
         }
     }
 }

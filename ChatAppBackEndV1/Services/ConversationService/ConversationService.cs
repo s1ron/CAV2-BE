@@ -32,7 +32,7 @@ namespace ChatAppBackEndV2.Services.ConversationService
                                   LastReadMessageId = z.par.LastReadMessageId,
                                   NickName = z.par.NickName,
                                   UserId= z.par.UserId,
-                                  FirstName = z.user.FisrtName,
+                                  FirstName = z.user.FirstName,
                                   LastName = z.user.LastName,
                                   Email = z.user.Email,
                                   ProfileImagePath = z.user.ProfileImagePath,
@@ -57,60 +57,65 @@ namespace ChatAppBackEndV2.Services.ConversationService
                                         BlockBy = con.IsBlock ? con.BlockBy : null,
                                         ConversationThemeId = con.ConversationThemeId,
                                         QuickMessage = con.QuickMessage,
-                                        //NickName = par.NickName,
                                         LastMessage = _context.Messages.Where(x=>x.ConversationId == con.Id).OrderByDescending(x=>x.SendAt).First(),
                                         CreateAt = con.CreateAt,
                                         IsFavoriteConversation = par.IsFavoriteConversation,
                                         AuthorId = con.AuthorId,
                                         ParticipantUser = parUser[con.Id].Object.ToList(),
                                     };
-            //conversationQuery.OrderByDescending(x => { x.LastMessage == null ? x.CreateAt : x.LastMessage.SendAt; });
+            var orderby = await conversationQuery.OrderBy(x=>x.LastMessage.SendAt).ThenBy(x=>x.CreateAt).ToListAsync();
 
-            var orderby = conversationQuery.OrderByDescending(x => x.LastMessage.SendAt)
-                .ThenBy(z => z.LastMessage.SendAt == null ? z.CreateAt : DateTime.MaxValue);
+            return orderby;
+        }
+
+        public async Task<CollapseConversationResponse> GetCollapseConversationByConversationIdAsync(Guid userId, long conversationId)
+        {
+            var conversationQuery = await _context.Conversations.FindAsync(conversationId);
+
+            var parti = await (from user in _context.Users
+                    join par in _context.Participants on user.Id equals par.UserId
+                    where par.ConversationId == conversationId
+                    select new ParticipantUserResponse()
+                    {
+                        LastReadMessageId = par.LastReadMessageId,
+                        NickName = par.NickName,
+                        UserId = par.UserId,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Email = user.Email,
+                        ProfileImagePath = user.ProfileImagePath,
+                        ProfileDescription = user.ProfileDescription,
+                        UserName = user.UserName,
+                        Gender = user.Gender,
+                        IsFavoriteConversation = par.IsFavoriteConversation
+                    }).ToListAsync();
 
 
-            return await orderby.ToListAsync();
-
-            /*var conversation = conversationQuery.ToList().Select(x => 
-             * 
-             * _context.Participants.GroupBy(x => x.ConversationId).ToDictionary(k => k.Key)
+            var result = new CollapseConversationResponse()
             {
-                AppUser getuser = null;
-                if (!x.con.IsGroup)
-                {
-                    var otheruser = from u in _context.Users
-                                    join p in _context.Participants on u.Id equals p.UserId
-                                    where p.ConversationId == x.con.Id && u.Id != userId
-                                    select u;
-                    getuser = _context.Users.Find(otheruser.FirstOrDefault().Id);
-                }
-                var lastmess = _context.Messages
-                            .Where(a => a.ConversationId == x.con.Id)
-                            .OrderByDescending(b => b.SendAt).First();
-                return new CollapseConversationResponse()
-                {
-                    IsGroup = x.con.IsGroup,
-                    ConversationId = x.con.Id,
-                    ConversationName = x.con.IsGroup ? x.con.ConversationName : getuser.FullName,
-                    IsMessageRequest= x.con.IsMessageRequest,
-                    ConversationImagePath = x.con.IsGroup ? x.con.ConversationImagePath : getuser.ProfileImagePath,
-                    IsBlock = x.con.IsBlock,
-                    BlockBy = x.con.IsBlock ? x.con.BlockBy : null,
-                    ConversationThemeId = x.con.ConversationThemeId,
-                    QuickMessage = x.con.QuickMessage,
-                    LastMessage = lastmess.Content,
-                    LastMessageDate = lastmess.SendAt,
-                    IsFavoriteConversation = x.par.IsFavoriteConversation,
-                    AuthorId = x.con.AuthorId
-                };
-            }).ToList();
-            return conversation;*/
+                IsGroup = conversationQuery.IsGroup,
+                ConversationId = conversationId,
+                ConversationName = conversationQuery.ConversationName,
+                IsMessageRequest = conversationQuery.IsMessageRequest,
+                ConversationImagePath = conversationQuery.ConversationImagePath,
+                IsBlock = conversationQuery.IsBlock,
+                BlockBy = conversationQuery.IsBlock ? conversationQuery.BlockBy : null,
+                ConversationThemeId = conversationQuery.ConversationThemeId,
+                QuickMessage = conversationQuery.QuickMessage,
+                LastMessage = _context.Messages.Where(x => x.ConversationId == conversationId).OrderByDescending(x => x.SendAt).FirstOrDefault(),
+                CreateAt = conversationQuery.CreateAt,
+                IsFavoriteConversation = parti.FirstOrDefault(x => x.UserId == userId).IsFavoriteConversation,
+                AuthorId = conversationQuery.AuthorId,
+                ParticipantUser = parti
+            };
+
+            return result;
+
         }
 
         public async Task<long> GetOrCreateConversation(Guid userId, Guid friendId)
         {
-            var getconversationId = GetConversationId(userId, friendId);
+            var getconversationId = await GetConversationId(userId, friendId);
             if(getconversationId != 0)
             {
                 return getconversationId;
@@ -124,10 +129,11 @@ namespace ChatAppBackEndV2.Services.ConversationService
                 IsGroup = false,
                 IsMessageRequest = !status.IsFriend,
                 IsBlock = false,
-                QuickMessage = "",
+                QuickMessage = "system/quick/default.png",
                 ConversationThemeId = 1
             };
             await _context.Conversations.AddAsync(conversation);
+            await _context.SaveChangesAsync();
             var list = new List<Participant>()
             {
                 new Participant()
@@ -144,15 +150,15 @@ namespace ChatAppBackEndV2.Services.ConversationService
                 },
             };
             await _context.Participants.AddRangeAsync(list);
+            await _context.SaveChangesAsync();
             return conversation.Id;
         }
-        private long GetConversationId(Guid userId, Guid friendId)
+        private async Task<long> GetConversationId(Guid userId, Guid friendId)
         {
-            var conversation = from con in _context.Conversations
+            var conversation = await (from con in _context.Conversations
                                join par in _context.Participants on con.Id equals par.ConversationId
-                               where con.IsGroup == false && (par.UserId == userId || par.UserId == userId)
-                               group con by con.Id into congr
-                               select congr;
+                               where con.IsGroup == false && (par.UserId == userId || par.UserId == friendId)
+                               select par.ConversationId).GroupBy(x=>x).ToListAsync();
             foreach(var gr in conversation)
             {
                 if (gr.Count() == 2)
@@ -161,6 +167,19 @@ namespace ChatAppBackEndV2.Services.ConversationService
                 }
             }
             return 0;
+        }
+
+        public async Task<List<ConversationTheme>> GetListConversationTheme()
+        {
+            return await _context.ConversationThemes.ToListAsync();
+        }
+
+        public async Task<List<Attachment>> GetConversationAttachment()
+        {
+           // var a = await _context.Attachments.Where(x=>x.FilePath.StartsWith)
+
+
+            throw new NotImplementedException();
         }
     }
 }

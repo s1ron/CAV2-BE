@@ -81,7 +81,7 @@ namespace ChatAppBackEndV1.Services.UserService
             var res = new GetUserResponse()
             {
                 UserId = user.Id,
-                FirstName = user.FisrtName,
+                FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserName = user.UserName,
                 Dob = user.Dob,
@@ -104,7 +104,7 @@ namespace ChatAppBackEndV1.Services.UserService
             user = new AppUser()
             {
                 Dob = request.Dob,
-                FisrtName = request.FirstName,
+                FirstName = request.FirstName,
                 LastName = request.LastName,
                 Gender = request.Gender,
                 UserName = request.UserName,
@@ -139,11 +139,11 @@ namespace ChatAppBackEndV1.Services.UserService
                         user = new AppUser()
                         {
                             Email = payload.Email,
-                            FisrtName = payload.FamilyName,
+                            FirstName = payload.FamilyName,
                             LastName = payload.GivenName,
                             ProfileImagePath = payload.Picture,
                             EmailConfirmed = payload.EmailVerified,
-                            UserName = payload.Email
+                            UserName = payload.Email.Split('@')[0],
                         };
                         var a = await _userManager.CreateAsync(user);
                         await _userManager.AddLoginAsync(user, loginInfo);
@@ -165,18 +165,5 @@ namespace ChatAppBackEndV1.Services.UserService
                 return new ErrorResponseResult<AuthenticateResponse>(ex.Message);
             }
         }
-
-        /*public async Task<List<FriendResponse>> GetOnlineFriendsAsync(Guid userId)
-        {
-            var a = await this.GetFriendsAsync(userId);
-            if (a.IsSuccess)
-            {
-                var b = _chatHub.GetOnlineUsers(a.Result);
-                return b;
-            }
-            return null;
-
-            //throw new NotImplementedException();
-        }*/
     }
 }

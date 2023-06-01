@@ -6,7 +6,7 @@ namespace ChatAppBackEndV2.Dtos.ChatHubDtos
     {
         public string MessageType { get; set; }
         public string Content { get; set; }
-        public string SenderId { get; set; }
+        public Guid SenderId { get; set; }
         public long ConversationId { get; set; }
         public DateTime SendAt { get; set; }
         public string? FilePath { get; set; }

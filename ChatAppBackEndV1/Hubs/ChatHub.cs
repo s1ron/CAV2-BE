@@ -45,44 +45,88 @@ namespace ChatAppBackEndV2.Hubs
 
         public override Task OnConnectedAsync()
         {
-            //HttpContext httpContext = Context.GetHttpContext();
             var cid = Context.ConnectionId;
             var uid = Context.GetHttpContext().Request.Query["userid"].ToString();
             var id = new Guid(uid);
             _connectedUsers.Add(id, cid);
-            foreach(var user in _connectedUsers)
-            {
-                Console.WriteLine(user.Key);
-            }
+
             return base.OnConnectedAsync();
+
         }
+
+        public async Task ConnectedEvent(Guid userId)
+        {
+            var friendUser = await (from fr in _context.Friends
+                              join user in _context.Users on fr.FriendId equals user.Id
+                              where fr.UserId == userId
+                              select fr.FriendId).ToListAsync();
+            var friendOnline = (from fu in friendUser
+                                join onu in _connectedUsers on fu equals onu.Key
+                                select onu.Value).ToList();
+
+            if (friendOnline.Count > 0)
+            {
+                var user = _context.Users.Find(userId);
+                var userRes = new FriendResponse()
+                {
+                    FriendId = userId,
+                    AddAt = DateTime.Now,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Dob = user.Dob,
+                    Gender = user.Gender,
+                    ProfileDescription = user.ProfileDescription,
+                    ProfileImagePath = user.ProfileImagePath,
+                };
+                foreach (var conid in friendOnline)
+                {
+                    await Clients.Client(conid).SendAsync("ReceiverOnlineFriend", userRes);
+                }
+
+            }
+        }
+        
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             var a = _connectedUsers.FirstOrDefault(x=>x.Value == Context.ConnectionId);
             _connectedUsers.Remove(a.Key);
+
+            var friendUser = (from fr in _context.Friends
+                                   join user in _context.Users on fr.FriendId equals user.Id
+                                   where fr.UserId == a.Key
+                                   select fr.FriendId).ToList();
+            var friendOnline = (from fu in friendUser
+                                join onu in _connectedUsers on fu equals onu.Key
+                                select onu).ToList();
+
+            foreach (var conid in friendOnline)
+            {
+                Clients.Client(conid.Value).SendAsync("ReceiverOfflineFriend", a.Key);
+            }
+
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<long> Test(string message)
-        {
-            await Clients.All.SendAsync("ReceiverMessage", message);
-            return 123;
-        }
 
         public async Task<object> SendMessage(SendMessageResquest sendMessageResquest)
         {
             var message = new Message()
             {
                 ConversationId = sendMessageResquest.ConversationId,
-                SenderId = new Guid(sendMessageResquest.SenderId),
+                SenderId = sendMessageResquest.SenderId,
                 Content = sendMessageResquest.Content,
                 MessageType = (MessageTypeEnum)Enum.Parse(typeof(MessageTypeEnum), sendMessageResquest.MessageType),
                 SendAt = sendMessageResquest.SendAt.ToLocalTime(),
             };
-            //await _context.Messages.AddAsync(message);
+
+            await _context.Messages.AddAsync(message);
+            await _context.SaveChangesAsync();
 
             if (message.MessageType == MessageTypeEnum.IMAGE ||
-                message.MessageType == MessageTypeEnum.FILE)
+                message.MessageType == MessageTypeEnum.FILE ||
+                message.MessageType == MessageTypeEnum.VIDEO ||
+                message.MessageType == MessageTypeEnum.AUDIO
+                )
             {
                 var att = new Attachment()
                 {
@@ -91,6 +135,7 @@ namespace ChatAppBackEndV2.Hubs
                     FileSize = (long)sendMessageResquest.FileSize
                 };
                 await _context.Attachments.AddAsync(att);
+                await _context.SaveChangesAsync();
             }
 
             var a = await (from con in _context.Conversations
@@ -120,8 +165,102 @@ namespace ChatAppBackEndV2.Hubs
                     Clients.Client(conid).SendAsync("ReceiverMessage", messageRes);
                 }
             }
-            //await Clients.All.SendAsync("ReceiverMessage", message);
             return new { message.Id, message.SendAt };
+        }
+
+        public async Task ChangeEmoji(ChangeEmojiRequest changeEmojiRequest)
+        {
+            var par = await _context.Participants.Where(x => x.ConversationId == changeEmojiRequest.ConversationId && x.UserId != changeEmojiRequest.SenderId).ToListAsync();
+            var onlPar = (from p in par 
+                         join o in _connectedUsers on p.UserId equals o.Key
+                         select o.Value).ToList();
+
+            var user = await _context.Users.FindAsync(changeEmojiRequest.SenderId);
+            var conversation = await _context.Conversations.FindAsync(changeEmojiRequest.ConversationId);
+
+            var message = new Message()
+            {
+                ConversationId = changeEmojiRequest.ConversationId,
+                SenderId = changeEmojiRequest.SenderId,
+                Content = $"{user.FirstName} has been change emoji",
+                MessageType = MessageTypeEnum.SYSTEM,
+                SendAt = DateTime.Now,
+            };
+            conversation.QuickMessage = changeEmojiRequest.NewEmoji;
+            //await _context.Messages.AddAsync(message);
+            await _context.SaveChangesAsync();
+            var messageRes = new MessageResponseFromHub()
+            {
+                Id = message.Id,
+                ConversationId = message.ConversationId,
+                SenderId = message.SenderId.ToString(),
+                Content = message.Content,
+                MessageType = message.MessageType.ToString(),
+                SendAt = message.SendAt,
+                FilePath = null,
+                FileSize = null
+            };
+            foreach (var con in onlPar)
+            {
+                Clients.Client(con).SendAsync("ReceiverNewEmoji", changeEmojiRequest);
+                Clients.Client(con).SendAsync("ReceiverMessage", messageRes);
+            }
+            Clients.Caller.SendAsync("ReceiverMessage", messageRes);
+        }
+        
+        public async Task ChangeTheme(ChangeThemeRequest changeThemeRequest)
+        {
+            var par = await _context.Participants.Where(x => x.ConversationId == changeThemeRequest.ConversationId && x.UserId != changeThemeRequest.SenderId).ToListAsync();
+            var onlPar = (from p in par
+                          join o in _connectedUsers on p.UserId equals o.Key
+                          select o.Value).ToList();
+            var newtheme = await _context.ConversationThemes.FindAsync(changeThemeRequest.NewThemeId);
+            var user = await _context.Users.FindAsync(changeThemeRequest.SenderId);
+            var conversation = await _context.Conversations.FindAsync(changeThemeRequest.ConversationId);
+            
+            var message = new Message()
+            {
+                ConversationId = changeThemeRequest.ConversationId,
+                SenderId = changeThemeRequest.SenderId,
+                Content = $"{user.FirstName} has been change theme to {newtheme.ThemeName}",
+                MessageType = MessageTypeEnum.SYSTEM,
+                SendAt = DateTime.Now,
+            };
+
+            conversation.ConversationThemeId = changeThemeRequest.NewThemeId;
+
+            //await _context.Messages.AddAsync(message);
+            await _context.SaveChangesAsync();
+
+            var messageRes = new MessageResponseFromHub()
+            {
+                Id = message.Id,
+                ConversationId = message.ConversationId,
+                SenderId = message.SenderId.ToString(),
+                Content = message.Content,
+                MessageType = message.MessageType.ToString(),
+                SendAt = message.SendAt,
+                FilePath = null,
+                FileSize = null
+            };
+
+            var themeres = new ChangeThemeResponse()
+            {
+                Id = newtheme.Id,
+                BgColor = newtheme.BgColor,
+                BgType = newtheme.BgColor,
+                OwnMessageColor = newtheme.OwnMessageColor,
+                FriendMessageColor = newtheme.FriendMessageColor,
+                ThemeName = newtheme.ThemeName,
+                ConversationId = changeThemeRequest.ConversationId
+            };
+                
+            foreach (var con in onlPar)
+            {
+                Clients.Client(con).SendAsync("ReceiverNewTheme", themeres);
+                Clients.Client(con).SendAsync("ReceiverMessage", messageRes);
+            }
+            Clients.Caller.SendAsync("ReceiverMessage", messageRes);
         }
     }
 }

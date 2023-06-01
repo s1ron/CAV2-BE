@@ -14,5 +14,6 @@ namespace ChatAppBackEndV2.Dtos.MessageService
         public string Email { get; set; }
         public string? ProfileImagePath { get; set; }
         public string? ProfileDescription { set; get; }
+        public bool IsFavoriteConversation { get; set; } = false;
     }
 }
