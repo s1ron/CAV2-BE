@@ -25,7 +25,7 @@ namespace ChatAppBackEndV2.Controllers
         }
 
 
-        [HttpPost("Register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest registerRequest)
         {
             var registerresult = await _userService.RegisterAsync(registerRequest);

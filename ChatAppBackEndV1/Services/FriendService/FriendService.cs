@@ -43,10 +43,10 @@ namespace ChatAppBackEndV1.Services.FriendService
                             AddAt = now,
                         }
                     };
-                    //await _context.Friends.AddRangeAsync(friends);
+                    await _context.Friends.AddRangeAsync(friends);
                 }
-                //_context.FriendRequests.Remove(friendRequest);
-                //await _context.SaveChangesAsync();
+                _context.FriendRequests.Remove(friendRequest);
+                await _context.SaveChangesAsync();
                 return new SuccessResponseResult<bool>();
             }
             return new ErrorResponseResult<bool>();
@@ -130,8 +130,8 @@ namespace ChatAppBackEndV1.Services.FriendService
             
             if (user.Count == 2)
             {
-                //_context.RemoveRange(user);
-                //await _context.SaveChangesAsync();
+                _context.RemoveRange(user);
+                await _context.SaveChangesAsync();
                 return new SuccessResponseResult<bool>();
             }
             return new ErrorResponseResult<bool>();
@@ -148,8 +148,8 @@ namespace ChatAppBackEndV1.Services.FriendService
                     ReceiverId = receiverId,
                     SendAt = DateTime.Now
                 };
-                //var result = await _context.FriendRequests.AddAsync(friendRequest);
-                //await _context.SaveChangesAsync();
+                await _context.FriendRequests.AddAsync(friendRequest);
+                await _context.SaveChangesAsync();
                 return new SuccessResponseResult<long>(friendRequest.Id);
             }
             return new ErrorResponseResult<long>();

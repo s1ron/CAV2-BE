@@ -1,6 +1,7 @@
 ﻿using ChatAppBackEndV1.Data.Context;
 using ChatAppBackEndV1.Data.Entities;
 using ChatAppBackEndV1.Services.FriendService;
+using ChatAppBackEndV2.Data.Enums;
 using ChatAppBackEndV2.Dtos.ConversationService;
 using ChatAppBackEndV2.Dtos.MessageService;
 using HotChocolate.Execution.Processing;
@@ -174,12 +175,14 @@ namespace ChatAppBackEndV2.Services.ConversationService
             return await _context.ConversationThemes.ToListAsync();
         }
 
-        public async Task<List<Attachment>> GetConversationAttachment()
+        public async Task<List<Attachment>> GetConversationAttachment(long conversationId)
         {
-           // var a = await _context.Attachments.Where(x=>x.FilePath.StartsWith)
-
-
-            throw new NotImplementedException();
+            //var a = await _context.Attachments.Where(x => x.FilePath.StartsWith($"attachment\\attachment-{conversationId}")).ToListAsync();
+            var sa = await (from at in _context.Attachments
+                            join m in _context.Messages on at.MessageId equals m.Id
+                            where at.FilePath.StartsWith($"attachment\\attachment-{conversationId}") && (m.MessageType == MessageTypeEnum.IMAGE || m.MessageType == MessageTypeEnum.VIDEO)
+                            select at).ToListAsync();
+            return sa;
         }
     }
 }

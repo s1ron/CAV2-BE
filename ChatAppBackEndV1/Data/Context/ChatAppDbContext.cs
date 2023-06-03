@@ -48,7 +48,7 @@ namespace ChatAppBackEndV1.Data.Context
                 SecurityStamp = string.Empty,
                 FirstName = "Vo Anh",
                 LastName = "Vu",
-                Gender = GenderEnum.Male
+                Gender = GenderEnum.MALE
             });
         }
 

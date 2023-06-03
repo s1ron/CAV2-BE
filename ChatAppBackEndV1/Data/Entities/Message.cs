@@ -10,6 +10,7 @@ namespace ChatAppBackEndV1.Data.Entities
         public string Content { get; set; }
         public MessageTypeEnum MessageType { get; set; } = MessageTypeEnum.OTHER;
         public DateTime SendAt { get; set; }
+        public string? NonFilePath { get; set; }
 
 
         //config

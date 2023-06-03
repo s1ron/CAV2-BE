@@ -11,7 +11,7 @@ namespace ChatAppBackEndV2.Dtos.FriendService
         public DateTime? Dob { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
-        public GenderEnum Gender { get; set; } = GenderEnum.Other;
+        public GenderEnum Gender { get; set; } = GenderEnum.OTHER;
         public string? ProfileImagePath { get; set; }
         public string? ProfileDescription { get; set; }
         public FriendStatusResponse FriendStatus { get; set; }

@@ -41,6 +41,13 @@ namespace ChatAppBackEndV2.GraphQLResolver
             return await messageService.GetFirstMessageAsync(conversationId);
         }
 
+        [GraphQLName("GetContinueMessage")]
+        [GraphQLDescription("GetContinueMessage")]
+        public async Task<List<SingleMessageResponse>> GetContinueMessage(long conversationId, long lastMessageId, [Service] IMessageService messageService)
+        {
+            return await messageService.GetContinueMessage(conversationId, lastMessageId);
+        }
+
         [GraphQLName("GetUserById")]
         [GraphQLDescription("GetUserById")]
         public async Task<GetUserResponse> GetUserByIdAsync(Guid userId, [Service] IUserService userService)
@@ -133,6 +140,13 @@ namespace ChatAppBackEndV2.GraphQLResolver
         public async Task<List<ConversationTheme>> GetListConversationTheme([Service] IConversationService conversationService)
         {
             return await conversationService.GetListConversationTheme();
+        }
+
+        [GraphQLName("GetConversationAttachment")]
+        [GraphQLDescription("GetConversationAttachment")]
+        public async Task<List<Attachment>> GetConversationAttachment(long conversationId, [Service] IConversationService conversationService)
+        {
+            return await conversationService.GetConversationAttachment(conversationId);
         }
     }
 }

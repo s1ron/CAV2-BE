@@ -14,7 +14,7 @@ namespace ChatAppBackEndV1.Data.Configurations
             builder.HasIndex(x => x.ConversationId);
             builder.HasOne(x=>x.Conversation).WithMany(x=>x.Messages)
                 .HasForeignKey(x=>x.ConversationId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
             builder.HasOne(x => x.User).WithMany(x => x.Messages)
                 .HasForeignKey(x => x.SenderId)
                 .OnDelete(DeleteBehavior.NoAction);

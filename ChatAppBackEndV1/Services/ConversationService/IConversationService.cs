@@ -9,6 +9,6 @@ namespace ChatAppBackEndV2.Services.ConversationService
         Task<CollapseConversationResponse> GetCollapseConversationByConversationIdAsync(Guid userId, long conversationId);
         Task<long> GetOrCreateConversation(Guid userId, Guid friendId);
         Task<List<ConversationTheme>> GetListConversationTheme();
-        Task<List<Attachment>> GetConversationAttachment();
+        Task<List<Attachment>> GetConversationAttachment(long conversationId);
     }
 }
