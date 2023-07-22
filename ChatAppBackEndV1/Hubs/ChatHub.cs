@@ -51,7 +51,6 @@ namespace ChatAppBackEndV2.Hubs
             _connectedUsers.Add(id, cid);
 
             return base.OnConnectedAsync();
-
         }
 
         public async Task ConnectedEvent(Guid userId)
@@ -110,13 +109,15 @@ namespace ChatAppBackEndV2.Hubs
 
         public async Task<object> SendMessage(SendMessageResquest sendMessageResquest)
         {
+            MessageTypeEnum type = (MessageTypeEnum)Enum.Parse(typeof(MessageTypeEnum), sendMessageResquest.MessageType);
             var message = new Message()
             {
                 ConversationId = sendMessageResquest.ConversationId,
                 SenderId = sendMessageResquest.SenderId,
                 Content = sendMessageResquest.Content,
-                MessageType = (MessageTypeEnum)Enum.Parse(typeof(MessageTypeEnum), sendMessageResquest.MessageType),
+                MessageType = type,
                 SendAt = sendMessageResquest.SendAt.ToLocalTime(),
+                NonFilePath = (type == MessageTypeEnum.QUICK || type == MessageTypeEnum.GIF || type == MessageTypeEnum.STICKER) ? sendMessageResquest.FilePath : null,
             };
 
             await _context.Messages.AddAsync(message);
@@ -187,7 +188,7 @@ namespace ChatAppBackEndV2.Hubs
                 SendAt = DateTime.Now,
             };
             conversation.QuickMessage = changeEmojiRequest.NewEmoji;
-            //await _context.Messages.AddAsync(message);
+            await _context.Messages.AddAsync(message);
             await _context.SaveChangesAsync();
             var messageRes = new MessageResponseFromHub()
             {
@@ -229,7 +230,7 @@ namespace ChatAppBackEndV2.Hubs
 
             conversation.ConversationThemeId = changeThemeRequest.NewThemeId;
 
-            //await _context.Messages.AddAsync(message);
+            await _context.Messages.AddAsync(message);
             await _context.SaveChangesAsync();
 
             var messageRes = new MessageResponseFromHub()
@@ -261,6 +262,27 @@ namespace ChatAppBackEndV2.Hubs
                 Clients.Client(con).SendAsync("ReceiverMessage", messageRes);
             }
             Clients.Caller.SendAsync("ReceiverMessage", messageRes);
+        }
+
+        public async Task DeleteMessage(DeleteMessageDto dto)
+        {
+            var mess = await _context.Messages.FindAsync(dto.MessageId);
+
+            if(mess != null)
+            {
+                mess.MessageType = MessageTypeEnum.DELETED;
+                await _context.SaveChangesAsync();
+
+                var par = await _context.Participants.Where(x => x.ConversationId == dto.ConversationId && x.UserId != dto.SenderId).ToListAsync();
+                var onlPar = (from p in par
+                              join o in _connectedUsers on p.UserId equals o.Key
+                              select o.Value).ToList();
+                foreach(var con in onlPar)
+                {
+                    Clients.Client(con).SendAsync("ReceiverDeletedMessage", dto);
+                }
+            }
+
         }
     }
 }

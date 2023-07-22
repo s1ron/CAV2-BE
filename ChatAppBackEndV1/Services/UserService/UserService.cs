@@ -1,5 +1,7 @@
 ﻿using ChatAppBackEndV1.Common.ServiceResponseResult;
 using ChatAppBackEndV1.Data.Entities;
+using ChatAppBackEndV2.Data.Enums;
+using ChatAppBackEndV2.Dtos.ChatHubDtos;
 using ChatAppBackEndV2.Dtos.UserService;
 using ChatAppBackEndV2.Hubs;
 using Google.Apis.Auth;
@@ -106,7 +108,7 @@ namespace ChatAppBackEndV1.Services.UserService
                 Dob = request.Dob,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Gender = request.Gender,
+                Gender = (GenderEnum)Enum.Parse(typeof(GenderEnum), request.Gender),
                 UserName = request.UserName,
                 PhoneNumber = request.PhoneNumber,
                 Email = request.Email

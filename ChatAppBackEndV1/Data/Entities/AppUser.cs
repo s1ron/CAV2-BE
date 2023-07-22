@@ -8,7 +8,7 @@ namespace ChatAppBackEndV1.Data.Entities
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime Dob { get; set; }
-        public GenderEnum Gender { get; set; } = GenderEnum.Other;
+        public GenderEnum Gender { get; set; } = GenderEnum.OTHER;
         public string? ProfileImagePath { get; set; }
         public string? ProfileDescription { get; set; }
 

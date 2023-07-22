@@ -6,7 +6,7 @@ namespace ChatAppBackEndV2.Dtos.UserService
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public GenderEnum Gender { get; set; }
+        public string Gender { get; set; }
         public string UserName { get; set; }
         public DateTime Dob { set; get; }
         public string Email { get; set; }

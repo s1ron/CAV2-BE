@@ -4,6 +4,7 @@ using ChatAppBackEndV1.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChatAppBackEndV2.Migrations
 {
     [DbContext(typeof(ChatAppDbContext))]
-    partial class ChatAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230601142830_addnonfilepathcol")]
+    partial class addnonfilepathcol
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,7 +102,7 @@ namespace ChatAppBackEndV2.Migrations
                         {
                             Id = new Guid("69bd714f-9576-45ba-b5b7-f00649be00de"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "bb97ea1e-2346-4a3c-bb6f-d52a3e718a52",
+                            ConcurrencyStamp = "37b4b19c-b5c3-464c-b914-6704039d8414",
                             Dob = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "anhvu.siron@gmail.com",
                             EmailConfirmed = true,
@@ -109,7 +112,7 @@ namespace ChatAppBackEndV2.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ANHVU.SIRON@GMAIL.COM",
                             NormalizedUserName = "ANHVU03",
-                            PasswordHash = "AQAAAAIAAYagAAAAEFut3eK/0sJ6Opc0dWh6fVPlhwO48T1KdxAPoxrfGLRThaNqdAcnIOOMW7QCjthFxw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELNQMlOWMKagcVjv3ZaeOFcw0hzCOTHaEzLgIWF5ky0qOIFIE3NnhgfUJSof5eaY7A==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "",
                             TwoFactorEnabled = false,
@@ -519,7 +522,7 @@ namespace ChatAppBackEndV2.Migrations
                     b.HasOne("ChatAppBackEndV1.Data.Entities.Message", "Message")
                         .WithMany("Attachments")
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Message");
@@ -579,7 +582,7 @@ namespace ChatAppBackEndV2.Migrations
                     b.HasOne("ChatAppBackEndV1.Data.Entities.Conversation", "Conversation")
                         .WithMany("Messages")
                         .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("ChatAppBackEndV1.Data.Entities.AppUser", "User")
